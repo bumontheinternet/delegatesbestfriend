@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delegate's Best Friend — MUN Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============ TOKENS ============ */
+  :root{
+    --ink:#16233A;
+    --parchment:#F3EEDF;
+    --brass:#C49A3C;
+    --flagred:#A8472E;
+    --slate:#5C6677;
+    --moss:#5B7D5B;
+    --treaty-blue:#3D5A73;
+
+    --radius-sm:6px;
+    --radius-md:10px;
+    --radius-lg:16px;
+    --font-display:'Spectral', serif;
+    --font-body:'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+
+  [data-theme="dark"]{
+    --bg:#101A2B;
+    --bg-elevated:#16233A;
+    --panel:#F3EEDF;
+    --panel-soft:#EAE3CC;
+    --panel-text:#1B2536;
+    --text:#EDE7D6;
+    --muted:#9AA6B8;
+    --accent:#C49A3C;
+    --accent-strong:#D9B65B;
+    --accent-ink:#2B1F08;
+    --flag:#C56548;
+    --line:rgba(243,238,223,0.14);
+    --line-strong:rgba(243,238,223,0.26);
+    --input-bg:#FFFFFF;
+    --input-border:#D9CFAF;
+    --shadow:0 10px 30px rgba(0,0,0,.4);
+    --sidebar-bg:#0C1422;
+    --sidebar-text:#C9D2E0;
+    --sidebar-active:#1C2A42;
+    --scrollbar:#2A3A56;
+  }
+  [data-theme="light"]{
+    --bg:#EFEADB;
+    --bg-elevated:#F6F2E6;
+    --panel:#FFFFFF;
+    --panel-soft:#F6F2E6;
+    --panel-text:#1B2536;
+    --text:#1B2536;
+    --muted:#677085;
+    --accent:#A87C2A;
+    --accent-strong:#8E6620;
+    --accent-ink:#FFFFFF;
+    --flag:#A8472E;
+    --line:rgba(22,35,58,.12);
+    --line-strong:rgba(22,35,58,.22);
+    --input-bg:#FBF9F2;
+    --input-border:#DDD3B8;
+    --shadow:0 10px 26px rgba(22,35,58,.10);
+    --sidebar-bg:#1B2536;
+    --sidebar-text:#D9DEE8;
+    --sidebar-active:#2A3650;
+    --scrollbar:#CFC6A8;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important; }
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  ::selection{ background:var(--accent); color:var(--accent-ink); }
+  *::-webkit-scrollbar{ width:10px; height:10px; }
+  *::-webkit-scrollbar-track{ background:transparent; }
+  *::-webkit-scrollbar-thumb{ background:var(--scrollbar); border-radius:8px; }
+
+  a{ color:inherit; }
+  h1,h2,h3,h4{ font-family:var(--font-display); margin:0; letter-spacing:.2px; }
+  button{ font-family:var(--font-body); cursor:pointer; }
+  input,textarea,select{ font-family:var(--font-body); }
+
+  button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible{
+    outline:2px solid var(--accent); outline-offset:2px; border-radius:4px;
+  }
+
+  #app{ display:flex; min-height:100vh; }
+
+  #sidebar{
+    width:248px; flex:0 0 248px;
+    background:var(--sidebar-bg); color:var(--sidebar-text);
+    display:flex; flex-direction:column;
+    position:sticky; top:0; height:100vh; z-index:20;
+    border-right:1px solid rgba(255,255,255,.06);
+  }
+  #sidebar .brand{
+    padding:22px 20px 16px; display:flex; align-items:center; gap:10px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  #sidebar .brand .gavel{ width:26px; height:26px; flex:0 0 auto; color:var(--accent); }
+  #sidebar .brand .title{ font-family:var(--font-display); font-size:18px; font-weight:600; color:#fff; line-height:1.15; }
+  #sidebar .brand .sub{ font-size:10.5px; letter-spacing:1.6px; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+
+  #navlist{ list-style:none; margin:10px 0; padding:6px 10px; flex:1; overflow-y:auto; }
+  #navlist li{ margin:2px 0; }
+  .navbtn{
+    width:100%; display:flex; align-items:center; gap:11px;
+    background:none; border:none; color:var(--sidebar-text);
+    padding:10px 12px; border-radius:var(--radius-md); font-size:13.5px; font-weight:500;
+    text-align:left; transition:background .15s ease, color .15s ease, transform .1s ease;
+  }
+  .navbtn svg{ width:18px; height:18px; flex:0 0 auto; opacity:.85; }
+  .navbtn:hover{ background:rgba(255,255,255,.06); }
+  .navbtn.active{ background:var(--sidebar-active); color:#fff; box-shadow:inset 2px 0 0 var(--accent); }
+  .navbtn.active svg{ opacity:1; color:var(--accent); }
+  .navbtn:active{ transform:scale(.985); }
+
+  #sidebar .sidebar-foot{
+    padding:14px 16px 18px; border-top:1px solid rgba(255,255,255,.08);
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .theme-row{ display:flex; gap:6px; }
+  .theme-btn{
+    flex:1; border:1px solid rgba(255,255,255,.14); background:transparent; color:var(--sidebar-text);
+    border-radius:var(--radius-sm); padding:6px 4px; font-size:11px; display:flex; flex-direction:column; align-items:center; gap:3px;
+  }
+  .theme-btn svg{ width:14px; height:14px; }
+  .theme-btn.active{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .photo-theme-input{ display:none; }
+
+  #main{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  #topbar{
+    position:sticky; top:0; z-index:10;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 28px; background:linear-gradient(to bottom, var(--bg) 70%, transparent);
+    backdrop-filter:blur(6px);
+  }
+  #topbar .crumb{ font-family:var(--font-mono); font-size:11px; letter-spacing:1.2px; text-transform:uppercase; color:var(--muted); }
+  #topbar h1{ font-size:24px; color:var(--text); margin-top:2px; }
+  #sidebar-toggle{ display:none; }
+
+  #content{ flex:1; padding:4px 28px 48px; max-width:1180px; }
+
+  .module{ display:none; animation:fadein .25s ease; }
+  .module.active{ display:block; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  .panel{
+    background:var(--panel); color:var(--panel-text);
+    border-radius:var(--radius-lg); box-shadow:var(--shadow);
+    padding:22px 24px; margin-bottom:20px; border:1px solid var(--line);
+  }
+  .panel h2{ font-size:19px; margin-bottom:4px; }
+  .panel .desc{ color:var(--slate); font-size:13px; margin-bottom:16px; }
+  .panel-soft{ background:var(--panel-soft); }
+
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width: 880px){ .grid-2{ grid-template-columns:1fr; } }
+
+  .analytics-tiles{ display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+  @media (max-width: 880px){ .analytics-tiles{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width: 460px){ .analytics-tiles{ grid-template-columns:1fr; } }
+
+  label.field-label{ display:block; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:var(--slate); margin-bottom:6px; }
+  input[type=text], input[type=number], input[type=url], input[type=email], input[type=password], textarea, select{
+    width:100%; background:var(--input-bg); border:1px solid var(--input-border); color:var(--panel-text);
+    border-radius:var(--radius-sm); padding:9px 11px; font-size:13.5px; resize:vertical;
+  }
+  textarea{ min-height:120px; line-height:1.5; }
+
+  .btn{
+    display:inline-flex; align-items:center; gap:7px; border:none; border-radius:var(--radius-sm);
+    padding:9px 16px; font-size:13.5px; font-weight:600; transition:transform .12s ease, box-shadow .12s ease, opacity .12s;
+    cursor:pointer;
+  }
+  .btn svg{ width:15px; height:15px; }
+  .btn-primary{ background:var(--accent); color:var(--accent-ink); }
+  .btn-primary:hover{ box-shadow:0 4px 14px rgba(0,0,0,.18); }
+  .btn-primary:active{ transform:translateY(1px) scale(.98); }
+  .btn-primary:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+  .btn-ghost{ background:transparent; border:1px solid var(--input-border); color:var(--panel-text); }
+  .btn-ghost:hover{ background:var(--panel-soft); }
+  .btn-danger{ background:transparent; border:1px solid var(--flag); color:var(--flag); }
+  .btn-sm{ padding:5px 10px; font-size:12px; }
+
+  .gavel-tap{ position:relative; overflow:visible; }
+  .gavel-tap.tapping::after{
+    content:''; position:absolute; inset:0; border-radius:var(--radius-sm);
+    border:2px solid var(--accent); animation:tapring .5s ease-out;
+  }
+  @keyframes tapring{ from{ opacity:.9; transform:scale(1);} to{ opacity:0; transform:scale(1.22);} }
+
+  .mode-toggle{ display:flex; gap:6px; background:var(--panel-soft); padding:4px; border-radius:var(--radius-md); width:fit-content; margin-bottom:14px; }
+  .mode-toggle button{ background:none; border:none; padding:7px 13px; border-radius:7px; font-size:12.5px; font-weight:600; color:var(--slate); cursor:pointer; }
+  .mode-toggle button.active{ background:var(--panel); color:var(--panel-text); box-shadow:0 1px 4px rgba(0,0,0,.12); }
+
+  .tag{ display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; padding:3px 9px; border-radius:20px; }
+  .spinner{ width:16px; height:16px; border-radius:50%; border:2px solid rgba(0,0,0,.15); border-top-color:var(--accent); animation:spin .7s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .empty-state{ text-align:center; padding:30px 16px; color:var(--slate); }
+  .empty-state svg{ width:34px; height:34px; opacity:.4; margin-bottom:8px; }
+  .empty-state .hint{ font-size:12.5px; }
+
+  .toast-wrap{ position:fixed; bottom:20px; right:20px; z-index:100; display:flex; flex-direction:column; gap:8px; }
+  .toast{ background:var(--ink); color:#F3EEDF; padding:10px 16px; border-radius:var(--radius-sm); font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,.3); animation:toastin .2s ease; max-width:320px; }
+  @keyframes toastin{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  .error-box{ background:rgba(168,71,52,.1); border:1px solid var(--flag); color:var(--flag); border-radius:var(--radius-sm); padding:9px 12px; font-size:12.5px; margin-top:10px; }
+
+  .margin-flag{ display:flex; align-items:flex-start; justify-content:center; padding-top:6px; }
+  .margin-flag .dot{ width:9px; height:9px; border-radius:50%; background:var(--flag); margin-top:5px; box-shadow:0 0 0 3px rgba(168,71,52,.18); }
+
+  .issue-card, .poi-card{ border:1px solid var(--line); border-radius:var(--radius-md); padding:13px 14px; margin-bottom:10px; background:var(--panel); }
+  .issue-card .row-top, .poi-card .row-top{ display:flex; align-items:center; gap:8px; margin-bottom:7px; flex-wrap:wrap; }
+  .issue-card blockquote, .poi-card blockquote{ margin:6px 0; padding:7px 10px; background:var(--panel-soft); border-left:3px solid var(--accent); font-style:italic; font-size:12.8px; border-radius:4px; }
+
+  .sev-high{ background:rgba(168,71,52,.14); color:var(--flag); }
+  .sev-med{ background:rgba(196,154,60,.18); color:var(--accent-strong); }
+  .sev-low{ background:rgba(92,102,119,.16); color:var(--slate); }
+  .type-clarifying{ background:rgba(61,90,115,.15); color:var(--treaty-blue); }
+  .type-challenging{ background:rgba(168,71,52,.14); color:var(--flag); }
+  .type-procedural{ background:rgba(91,125,91,.15); color:var(--moss); }
+  .type-factual{ background:rgba(196,154,60,.18); color:var(--accent-strong); }
+
+  table.ref-table{ width:100%; border-collapse:collapse; font-size:12.8px; }
+  table.ref-table th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--slate); padding:7px 8px; border-bottom:1px solid var(--line-strong); }
+  table.ref-table td{ padding:8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  table.ref-table tr:hover td{ background:var(--panel-soft); }
+
+  .clause-item{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; border-bottom:1px solid var(--line); font-size:13px; }
+  .clause-item:hover{ background:var(--panel-soft); }
+  .clause-item .copy-btn{ flex:0 0 auto; background:none; border:none; color:var(--accent-strong); font-size:11px; font-weight:700; text-transform:uppercase; padding:4px 8px; border-radius:5px; cursor:pointer; }
+  .clause-item .copy-btn:hover{ background:var(--panel-soft); }
+
+  .timer-wrap{ display:flex; flex-direction:column; align-items:center; gap:14px; padding:6px 0 10px; }
+  .timer-ring{ position:relative; width:200px; height:200px; }
+  .timer-ring svg{ width:100%; height:100%; transform:rotate(-90deg); }
+  .timer-ring .ring-track{ fill:none; stroke:var(--panel-soft); stroke-width:10; }
+  .timer-ring .ring-prog{ fill:none; stroke:var(--accent); stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset .25s linear; }
+  .timer-ring .ring-label{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .timer-ring .ring-label .time{ font-family:var(--font-mono); font-size:34px; font-weight:600; }
+  .timer-ring .ring-label .sub{ font-size:10.5px; text-transform:uppercase; letter-spacing:1px; color:var(--slate); }
+  .timer-ring.warn .ring-prog{ stroke:var(--flag); }
+
+  .queue-item{ display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid var(--line); border-radius:var(--radius-sm); margin-bottom:6px; background:var(--panel); }
+  .queue-item .idx{ font-family:var(--font-mono); color:var(--slate); font-size:12px; width:20px; }
+  .queue-item.current{ border-color:var(--accent); box-shadow:0 0 0 2px rgba(196,154,60,.18); }
+  .queue-item .name{ flex:1; font-size:13.5px; }
+  .queue-item .icon-btn{ background:none; border:none; color:var(--slate); padding:4px; border-radius:5px; display:flex; cursor:pointer; }
+  .queue-item .icon-btn:hover{ background:var(--panel-soft); color:var(--panel-text); }
+  .queue-item .icon-btn svg{ width:15px; height:15px; }
+
+  .stat-tile{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-md); padding:14px; text-align:center; }
+  .stat-tile .num{ font-family:var(--font-mono); font-size:28px; font-weight:600; color:var(--accent-strong); }
+  .stat-tile .lbl{ font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--slate); margin-top:3px; }
+  .stat-tile button{ margin-top:8px; }
+
+  .bloc-col{ flex:1; background:var(--panel-soft); border-radius:var(--radius-md); padding:10px; min-height:140px; }
+  .bloc-col h4{ font-size:12px; text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px; }
+  .bloc-chip{ display:flex; align-items:center; justify-content:space-between; gap:6px; background:var(--panel); border:1px solid var(--line); border-radius:7px; padding:6px 9px; font-size:12.5px; margin-bottom:6px; }
+  .bloc-chip select{ font-size:11px; padding:2px 4px; width:auto; }
+
+  .net-card{ border:1px solid var(--line); border-radius:var(--radius-md); padding:13px 14px; margin-bottom:10px; }
+  .net-card .row-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .rel-ally{ background:rgba(91,125,91,.16); color:var(--moss); }
+  .rel-opposition{ background:rgba(168,71,52,.14); color:var(--flag); }
+  .rel-fence{ background:rgba(196,154,60,.18); color:var(--accent-strong); }
+  .rel-cosponsor{ background:rgba(61,90,115,.15); color:var(--treaty-blue); }
+
+  .log-row{ display:flex; justify-content:space-between; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--line); color:var(--slate); }
+  .log-row span:first-child{ color:var(--panel-text); }
+
+  .mini-pulse{ width:8px; height:8px; border-radius:50%; background:var(--flag); display:inline-block; animation:pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+
+  @media (max-width: 860px){
+    #sidebar{ position:fixed; left:-260px; transition:left .2s ease; box-shadow:var(--shadow); }
+    #sidebar.open{ left:0; }
+    #sidebar-toggle{ display:flex; }
+    #content{ padding:4px 16px 40px; }
+    #topbar{ padding:14px 16px; }
+    .grid-2{ grid-template-columns:1fr; }
+  }
+
+  /* ============ AUTH GATE ============ */
+  .app-hidden{ display:none !important; }
+  #auth-gate{ position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:200; padding:24px; overflow-y:auto; }
+  .auth-card{ background:var(--panel); color:var(--panel-text); width:100%; max-width:380px; border-radius:var(--radius-lg); box-shadow:var(--shadow); padding:32px 28px; border:1px solid var(--line); }
+  .auth-brand{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .auth-brand svg{ width:28px; height:28px; color:var(--accent); flex:0 0 auto; }
+  .auth-brand .name{ font-family:var(--font-display); font-size:21px; font-weight:600; }
+  .auth-card .tagline{ color:var(--slate); font-size:13px; margin:0 0 22px; }
+  .google-btn{ width:100%; justify-content:center; background:#fff; color:#1B2536; border:1px solid var(--input-border); gap:10px; padding:10px; }
+  .google-btn:hover{ background:#f7f7f7; }
+  .google-btn img{ width:18px; height:18px; }
+  .auth-divider{ display:flex; align-items:center; gap:10px; margin:18px 0; color:var(--slate); font-size:11px; text-transform:uppercase; letter-spacing:.6px; }
+  .auth-divider::before, .auth-divider::after{ content:''; flex:1; height:1px; background:var(--line-strong); }
+  #email-auth-form{ display:flex; flex-direction:column; gap:10px; }
+  #email-auth-form button[type=submit]{ width:100%; justify-content:center; margin-top:6px; }
+  .auth-toggle-row{ text-align:center; font-size:12.5px; color:var(--slate); margin-top:16px; }
+  .link-btn{ background:none; border:none; color:var(--accent-strong); font-weight:600; font-size:12.5px; padding:0; text-decoration:underline; cursor:pointer; }
+  .auth-forgot-row{ text-align:center; margin-top:8px; }
+  .auth-setup-notice{ font-size:12.5px; line-height:1.6; background:var(--panel-soft); border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px 14px; }
+  .auth-setup-notice code{ background:rgba(0,0,0,.08); padding:1px 5px; border-radius:4px; font-family:var(--font-mono); font-size:11.5px; }
+
+  .account-chip{ display:flex; align-items:center; gap:9px; padding:10px 6px; }
+  .account-chip img, .account-fallback-avatar{ width:30px; height:30px; border-radius:50%; flex:0 0 auto; object-fit:cover; }
+  .account-fallback-avatar{ background:var(--accent); color:var(--accent-ink); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12.5px; }
+  .account-info{ flex:1; min-width:0; }
+  .account-name{ font-size:12.5px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .account-email{ font-size:10.8px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .account-chip .icon-btn{ background:none; border:none; color:var(--sidebar-text); padding:5px; border-radius:6px; display:flex; cursor:pointer; }
+  .account-chip .icon-btn:hover{ background:rgba(255,255,255,.08); }
+  .account-chip .icon-btn svg{ width:15px; height:15px; }
+</style>
+</head>
+
+<body data-theme="dark">
+
+<div id="auth-gate">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M13 6l5 5-2 2-5-5z"/><path d="M9 10l5 5-5 5-5-5z"/><path d="M3 21h7"/><path d="M16.5 4.5l3-3 2 2-3 3z"/>
+      </svg>
+      <div class="name">Delegate's Best Friend</div>
+    </div>
+    <p class="tagline">Sign in to save your prep across every device.</p>
+
+    <div id="auth-setup-block" style="display:none;">
+      <div class="auth-setup-notice">
+        Sign-in isn't connected to a Firebase project yet. Open the page source, find <code>FIREBASE_CONFIG</code> near the top of the script, and paste in your own Firebase project's config object.
+      </div>
+    </div>
+
+    <div id="auth-form-block">
+      <button class="btn google-btn" id="google-signin-btn">
+        <img src="https://developers.google.com/identity/images/g-logo.png" alt="">
+        Continue with Google
+      </button>
+
+      <div class="auth-divider">or</div>
+
+      <form id="email-auth-form">
+        <div>
+          <label class="field-label" for="auth-email">Email</label>
+          <input type="email" id="auth-email" required autocomplete="email">
+        </div>
+        <div>
+          <label class="field-label" for="auth-password">Password</label>
+          <input type="password" id="auth-password" required minlength="6" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" id="email-auth-submit">Sign in</button>
+      </form>
+
+      <div class="auth-toggle-row">
+        <span id="auth-mode-text">Don't have an account?</span> <button class="link-btn" id="auth-mode-toggle">Create one</button>
+      </div>
+      <div class="auth-forgot-row">
+        <button class="link-btn" id="auth-forgot-btn">Forgot password?</button>
+      </div>
+      <div id="auth-error"></div>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="app-hidden">
+
+  <aside id="sidebar">
+    <div class="brand">
+      <svg class="gavel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M13 6l5 5-2 2-5-5z"/><path d="M9 10l5 5-5 5-5-5z"/><path d="M3 21h7"/><path d="M16.5 4.5l3-3 2 2-3 3z"/>
+      </svg>
+      <div>
+        <div class="title">Delegate's Best Friend</div>
+        <div class="sub">MUN Command Center</div>
+      </div>
+    </div>
+
+    <ul id="navlist">
+      <li><button class="navbtn active" data-module="floorbrief">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 6l5 5-2 2-5-5z"/><path d="M9 10l5 5-5 5-5-5z"/><path d="M3 21h7"/></svg>
+        Floor Brief
+      </button></li>
+      <li><button class="navbtn" data-module="caucus">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        Caucus Tools
+      </button></li>
+      <li><button class="navbtn" data-module="draft">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/><path d="M2 2l7.5 7.5"/><circle cx="11" cy="11" r="2"/></svg>
+        Draft Assistant
+      </button></li>
+      <li><button class="navbtn" data-module="research">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 010 18a14 14 0 010-18z"/></svg>
+        Research
+      </button></li>
+      <li><button class="navbtn" data-module="strategy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>
+        Strategy
+      </button></li>
+      <li><button class="navbtn" data-module="speechcoach">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3M9 21h6"/></svg>
+        Speech Coach
+      </button></li>
+      <li><button class="navbtn" data-module="network">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="7" r="2.6"/><circle cx="18" cy="7" r="2.6"/><circle cx="12" cy="17" r="2.6"/><path d="M7.8 8.8L10.4 15.2M16.2 8.8L13.6 15.2M8.6 7H15.4"/></svg>
+        Network
+      </button></li>
+      <li><button class="navbtn" data-module="analytics">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M11 20V4M18 20v-7"/><path d="M2 20h20"/></svg>
+        Analytics
+      </button></li>
+    </ul>
+
+    <div class="sidebar-foot">
+      <div class="account-chip" id="account-chip">
+        <img id="account-avatar" src="" alt="" style="display:none;">
+        <div class="account-fallback-avatar" id="account-fallback-avatar" style="display:none;"></div>
+        <div class="account-info">
+          <div class="account-name" id="account-name">—</div>
+          <div class="account-email" id="account-email"></div>
+        </div>
+        <button class="icon-btn" id="account-signout-btn" title="Sign out" aria-label="Sign out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        </button>
+      </div>
+      <div class="theme-row" role="group" aria-label="Theme selector">
+        <button class="theme-btn active" id="theme-dark-btn" title="Dark mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 109.8 9.8z"/></svg>
+          Dark
+        </button>
+        <button class="theme-btn" id="theme-light-btn" title="Light mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+          Light
+        </button>
+        <button class="theme-btn" id="theme-photo-btn" title="Theme from a photo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 16l-5-4-4 3-3-2-5 4"/></svg>
+          Photo
+        </button>
+        <input type="file" accept="image/*" class="photo-theme-input" id="photo-theme-input">
+      </div>
+    </div>
+  </aside>
+
+  <button id="sidebar-toggle" class="btn btn-ghost" style="position:fixed; top:14px; left:14px; z-index:30;" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+
+  <div id="main">
+    <div id="topbar">
+      <div>
+        <div class="crumb" id="crumb-text">Module · Floor Brief</div>
+        <h1 id="module-title">Floor Brief</h1>
+      </div>
+    </div>
+
+    <div id="content">
+
+      <!-- FLOOR BRIEF MODULE -->
+      <div class="module active" id="mod-floorbrief" data-title="Floor Brief" data-crumb="Module · Speech &amp; Resolution Analysis">
+        <div class="mode-toggle" id="fb-subtab" role="tablist">
+          <button class="active" data-sub="poi">Points of Information</button>
+          <button data-sub="res">Resolution Review</button>
+        </div>
+
+        <section id="fb-poi-section">
+          <div class="panel">
+            <h2>Generate Points of Information</h2>
+            <p class="desc">Paste a speech or listen live — get POIs sorted by type.</p>
+            <div class="mode-toggle" id="fb-poi-mode">
+              <button class="active" data-mode="paste">Paste text</button>
+              <button data-mode="live">Listen live</button>
+            </div>
+            <div data-mode-panel="paste">
+              <label class="field-label" for="fb-poi-text">Speech transcript</label>
+              <textarea id="fb-poi-text" placeholder="Paste the delegate's speech here…"></textarea>
+            </div>
+            <div data-mode-panel="live" style="display:none;">
+              <div id="fb-poi-live-unsupported" class="error-box" style="display:none;">Live listening needs Chrome or Edge.</div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                <button class="btn btn-primary gavel-tap" id="fb-poi-live-toggle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3M9 21h6"/></svg>
+                  <span id="fb-poi-live-toggle-label">Start listening</span>
+                </button>
+                <span id="fb-poi-live-status" style="font-size:12.5px;color:var(--slate);">Microphone is off.</span>
+              </div>
+              <div id="fb-poi-live-transcript" style="min-height:80px;max-height:160px;overflow-y:auto;background:var(--panel-soft);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;line-height:1.55;"></div>
+            </div>
+            <div class="grid-2" style="margin:14px 0;">
+              <div><label class="field-label" for="fb-poi-country">Speaker's country (optional)</label><input type="text" id="fb-poi-country" placeholder="e.g. Brazil"></div>
+              <div><label class="field-label" for="fb-poi-topic">Committee topic (optional)</label><input type="text" id="fb-poi-topic" placeholder="e.g. Marine pollution"></div>
+            </div>
+            <button class="btn btn-primary gavel-tap" id="fb-poi-generate">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 21h4M12 3a6 6 0 016 6c0 2.2-1.2 3.6-2.2 4.6-.6.6-.8 1-.8 1.9H9c0-.9-.2-1.3-.8-1.9C7.2 12.6 6 11.2 6 9a6 6 0 016-6z"/></svg>
+              <span id="fb-poi-generate-label">Generate POIs</span>
+            </button>
+            <div id="fb-poi-error"></div>
+          </div>
+          <div class="panel" id="fb-poi-results-panel" style="display:none;"><h2>Points of Information</h2><div id="fb-poi-feed"></div></div>
+        </section>
+
+        <section id="fb-res-section" style="display:none;">
+          <div class="panel">
+            <h2>Resolution Review</h2>
+            <p class="desc">Flags vague language, contradictions, procedural issues, and claims worth verifying.</p>
+            <label class="field-label" for="fb-res-text">Resolution text</label>
+            <textarea id="fb-res-text" style="min-height:180px;" placeholder="Paste preambulatory and operative clauses here…"></textarea>
+            <button class="btn btn-primary gavel-tap" id="fb-res-generate" style="margin-top:14px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+              <span id="fb-res-generate-label">Review resolution</span>
+            </button>
+            <div id="fb-res-error"></div>
+          </div>
+          <div class="panel" id="fb-res-results-panel" style="display:none;"><h2>Flagged issues</h2><div id="fb-res-feed"></div></div>
+        </section>
+      </div>
+
+      <!-- CAUCUS MODULE -->
+      <div class="module" id="mod-caucus" data-title="Caucus Tools" data-crumb="Module · Timers &amp; Speaker Queue">
+        <div class="grid-2">
+          <div class="panel">
+            <h2>Speaking timer</h2>
+            <p class="desc">Now speaking: <strong id="caucus-now-speaking">—</strong></p>
+            <div class="timer-wrap">
+              <div class="timer-ring" id="caucus-ring">
+                <svg viewBox="0 0 200 200"><circle class="ring-track" cx="100" cy="100" r="86"/><circle class="ring-prog" id="caucus-ring-prog" cx="100" cy="100" r="86" stroke-dasharray="540.4" stroke-dashoffset="0"/></svg>
+                <div class="ring-label"><div class="time" id="caucus-time">01:00</div><div class="sub" id="caucus-time-sub">ready</div></div>
+              </div>
+              <div class="grid-2" style="width:100%;max-width:300px;gap:8px;">
+                <div><label class="field-label" for="caucus-duration">Duration (sec)</label><input type="number" id="caucus-duration" value="60" min="5" step="5"></div>
+                <div><label class="field-label" for="caucus-warn">Warn at (sec left)</label><input type="number" id="caucus-warn" value="15" min="0" step="5"></div>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary gavel-tap" id="caucus-start"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l13 8-13 8z"/></svg>Start</button>
+                <button class="btn btn-ghost" id="caucus-pause"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>Pause</button>
+                <button class="btn btn-ghost" id="caucus-reset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 4v6h6"/></svg>Reset</button>
+              </div>
+            </div>
+            <div class="desc" style="margin-top:6px;">Total caucus <input type="number" id="caucus-total" value="600" min="10" step="30" style="width:70px;display:inline;padding:3px 6px;"> sec → fits <strong id="caucus-fit-count" style="color:var(--accent-strong);">10</strong> speakers</div>
+          </div>
+          <div class="panel">
+            <h2>Speaker queue</h2>
+            <div style="display:flex;gap:8px;margin-bottom:12px;"><input type="text" id="caucus-queue-name" placeholder="Delegation name"><button class="btn btn-primary" id="caucus-queue-add">Add</button></div>
+            <div id="caucus-queue-list"></div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button class="btn btn-ghost gavel-tap" id="caucus-queue-next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4l9 8-9 8z"/><path d="M17 4v16"/></svg>Next speaker</button>
+              <button class="btn btn-danger" id="caucus-queue-clear">Clear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DRAFT MODULE -->
+      <div class="module" id="mod-draft" data-title="Draft Assistant" data-crumb="Module · Resolution Drafting">
+        <div class="panel">
+          <h2>Clause library</h2>
+          <p class="desc">Click any phrase to copy it.</p>
+          <div class="mode-toggle" id="draft-clause-mode"><button class="active" data-mode="preambulatory">Preambulatory</button><button data-mode="operative">Operative</button></div>
+          <input type="text" id="draft-clause-search" placeholder="Search phrases…" style="margin-bottom:10px;">
+          <div id="draft-clause-list" style="max-height:280px;overflow-y:auto;border:1px solid var(--line);border-radius:var(--radius-sm);"></div>
+        </div>
+        <div class="grid-2">
+          <div class="panel">
+            <h2>Clause improver</h2>
+            <p class="desc">Paste one clause — get a tightened, enforceable version.</p>
+            <textarea id="draft-improve-input" placeholder="e.g. Calls upon member states to try to do something about clean water eventually."></textarea>
+            <button class="btn btn-primary gavel-tap" id="draft-improve-btn" style="margin-top:10px;"><span id="draft-improve-label">Improve clause</span></button>
+            <div id="draft-improve-error"></div><div id="draft-improve-result"></div>
+          </div>
+          <div class="panel">
+            <h2>Merge two clauses</h2>
+            <p class="desc">Paste two competing clauses — get one merged version.</p>
+            <label class="field-label" for="draft-merge-a">Clause A</label><textarea id="draft-merge-a" style="min-height:70px;"></textarea>
+            <label class="field-label" for="draft-merge-b" style="margin-top:8px;">Clause B</label><textarea id="draft-merge-b" style="min-height:70px;"></textarea>
+            <button class="btn btn-primary gavel-tap" id="draft-merge-btn" style="margin-top:10px;"><span id="draft-merge-label">Merge clauses</span></button>
+            <div id="draft-merge-error"></div><div id="draft-merge-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESEARCH MODULE -->
+      <div class="module" id="mod-research" data-title="Research" data-crumb="Module · Country &amp; Procedure Reference">
+        <div class="grid-2">
+          <div class="panel">
+            <h2>Country profile</h2>
+            <p class="desc">AI-drafted prep brief. Verify before citing on the floor.</p>
+            <div style="display:flex;gap:8px;"><input type="text" id="research-country-input" placeholder="Country name…"><button class="btn btn-primary gavel-tap" id="research-country-btn">Profile</button></div>
+            <div id="research-country-error"></div><div id="research-country-result"></div>
+          </div>
+          <div class="panel">
+            <h2>Quotable stats</h2>
+            <p class="desc">Stat angles to chase down and verify against a primary source.</p>
+            <div style="display:flex;gap:8px;"><input type="text" id="research-stats-input" placeholder="Topic…"><button class="btn btn-primary gavel-tap" id="research-stats-btn">Find angles</button></div>
+            <div id="research-stats-error"></div><div id="research-stats-result"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Rules of Procedure — quick reference</h2>
+          <input type="text" id="research-rop-search" placeholder="Search motions and points…" style="margin-bottom:10px;">
+          <div style="overflow-x:auto;"><table class="ref-table" id="research-rop-table"><thead><tr><th>Motion / point</th><th>Typical use</th><th>Vote needed</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- STRATEGY MODULE -->
+      <div class="module" id="mod-strategy" data-title="Strategy" data-crumb="Module · Bloc Mapping &amp; Tactics">
+        <div class="panel">
+          <h2>Bloc mapper</h2>
+          <div style="display:flex;gap:8px;margin-bottom:12px;"><input type="text" id="strategy-bloc-name" placeholder="Delegation name"><button class="btn btn-primary" id="strategy-bloc-add">Add</button></div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <div class="bloc-col" style="min-width:200px;"><h4 style="color:var(--moss);">Pro</h4><div class="bloc-list" data-list="pro"></div></div>
+            <div class="bloc-col" style="min-width:200px;"><h4 style="color:var(--slate);">Neutral</h4><div class="bloc-list" data-list="neutral"></div></div>
+            <div class="bloc-col" style="min-width:200px;"><h4 style="color:var(--flag);">Anti</h4><div class="bloc-list" data-list="anti"></div></div>
+          </div>
+          <div style="margin-top:16px;">
+            <div style="display:flex;height:14px;border-radius:8px;overflow:hidden;border:1px solid var(--line);">
+              <div id="strategy-bar-pro" style="background:var(--moss);width:0%;transition:width .3s;"></div>
+              <div id="strategy-bar-neutral" style="background:var(--slate);width:0%;transition:width .3s;"></div>
+              <div id="strategy-bar-anti" style="background:var(--flag);width:0%;transition:width .3s;"></div>
+            </div>
+            <div class="desc" id="strategy-bar-legend" style="margin-top:6px;">Add delegations to see vote share.</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="panel">
+            <h2>Tactical advisor</h2>
+            <textarea id="strategy-advisor-input" placeholder="e.g. 8 pro, 6 neutral, 9 anti. We need neutrals to pass our amendment. What's our move?"></textarea>
+            <button class="btn btn-primary gavel-tap" id="strategy-advisor-btn" style="margin-top:10px;"><span id="strategy-advisor-label">Get tactical read</span></button>
+            <div id="strategy-advisor-error"></div><div id="strategy-advisor-result"></div>
+          </div>
+          <div class="panel">
+            <h2>Motion matrix</h2>
+            <input type="text" id="strategy-motion-search" placeholder="Search motions…" style="margin-bottom:10px;">
+            <div style="max-height:280px;overflow-y:auto;"><table class="ref-table" id="strategy-motion-table"><thead><tr><th>Motion</th><th>Effect</th><th>Debatable?</th></tr></thead><tbody></tbody></table></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SPEECH COACH MODULE -->
+      <div class="module" id="mod-speechcoach" data-title="Speech Coach" data-crumb="Module · Practice &amp; Delivery">
+        <div class="panel">
+          <h2>Practice sandbox</h2>
+          <div class="mode-toggle" id="coach-mode"><button class="active" data-mode="paste">Paste draft</button><button data-mode="live">Record live</button></div>
+          <div data-mode-panel="paste"><textarea id="coach-text" placeholder="Paste your speech draft here…"></textarea></div>
+          <div data-mode-panel="live" style="display:none;">
+            <div id="coach-live-unsupported" class="error-box" style="display:none;">Live recording needs Chrome or Edge.</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+              <button class="btn btn-primary gavel-tap" id="coach-live-toggle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3M9 21h6"/></svg>
+                <span id="coach-live-toggle-label">Start recording</span>
+              </button>
+              <span id="coach-live-status" style="font-size:12.5px;color:var(--slate);">Mic is off.</span>
+            </div>
+            <div id="coach-live-transcript" style="min-height:80px;max-height:160px;overflow-y:auto;background:var(--panel-soft);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;"></div>
+          </div>
+          <button class="btn btn-primary gavel-tap" id="coach-score-btn" style="margin-top:12px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg><span id="coach-score-label">Score this speech</span></button>
+          <div class="desc" id="coach-wordcount" style="margin-top:6px;">0 words · roughly 0:00 at 150 wpm.</div>
+          <div id="coach-score-error"></div><div id="coach-score-result"></div>
+        </div>
+        <div class="panel">
+          <h2>Translator</h2>
+          <div class="grid-2">
+            <div><label class="field-label" for="coach-translate-input">Text</label><textarea id="coach-translate-input" style="min-height:100px;"></textarea></div>
+            <div>
+              <label class="field-label" for="coach-translate-lang">Target language</label>
+              <input type="text" id="coach-translate-lang" value="French">
+              <button class="btn btn-primary gavel-tap" id="coach-translate-btn" style="margin-top:10px;"><span id="coach-translate-label">Translate</span></button>
+              <div id="coach-translate-error"></div><div id="coach-translate-result"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NETWORK MODULE -->
+      <div class="module" id="mod-network" data-title="Network" data-crumb="Module · Delegate Directory">
+        <div class="panel">
+          <h2>Add a delegate</h2>
+          <div class="grid-2">
+            <div><label class="field-label" for="net-name">Name</label><input type="text" id="net-name" placeholder="e.g. Brazil delegate, Committee 2"></div>
+            <div><label class="field-label" for="net-delegation">Delegation</label><input type="text" id="net-delegation" placeholder="e.g. Brazil, UNEP"></div>
+          </div>
+          <div class="grid-2" style="margin-top:10px;">
+            <div><label class="field-label" for="net-relationship">Relationship</label><select id="net-relationship"><option value="ally">Ally</option><option value="opposition">Opposition</option><option value="fence">Fence-sitter</option><option value="cosponsor">Co-sponsor</option></select></div>
+            <div><label class="field-label" for="net-conference">Conference</label><input type="text" id="net-conference" placeholder="e.g. NHSMUN 2026"></div>
+          </div>
+          <label class="field-label" style="margin-top:10px;" for="net-notes">Notes</label>
+          <textarea id="net-notes" style="min-height:70px;" placeholder="Strategy, what they care about…"></textarea>
+          <button class="btn btn-primary" id="net-add-btn" style="margin-top:10px;">Save contact</button>
+          <div id="net-add-error"></div>
+        </div>
+        <div class="panel">
+          <h2>Directory</h2>
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+            <input type="text" id="net-search" placeholder="Search…" style="flex:1;min-width:180px;">
+            <select id="net-filter" style="width:auto;"><option value="">All</option><option value="ally">Allies</option><option value="opposition">Opposition</option><option value="fence">Fence-sitters</option><option value="cosponsor">Co-sponsors</option></select>
+          </div>
+          <div id="net-list"></div>
+        </div>
+      </div>
+
+      <!-- ANALYTICS MODULE -->
+      <div class="module" id="mod-analytics" data-title="Analytics" data-crumb="Module · Session Activity">
+        <div class="panel">
+          <h2>This session</h2><p class="desc">One tap per action as it happens.</p>
+          <div class="analytics-tiles" id="analytics-tiles-row">
+            <div class="stat-tile" data-key="speeches"><div class="num" data-count>0</div><div class="lbl">Speeches</div><button class="btn btn-ghost btn-sm" data-incr>+1</button></div>
+            <div class="stat-tile" data-key="pois"><div class="num" data-count>0</div><div class="lbl">POIs raised</div><button class="btn btn-ghost btn-sm" data-incr>+1</button></div>
+            <div class="stat-tile" data-key="motions"><div class="num" data-count>0</div><div class="lbl">Motions</div><button class="btn btn-ghost btn-sm" data-incr>+1</button></div>
+            <div class="stat-tile" data-key="blocadds"><div class="num" data-count>0</div><div class="lbl">Bloc adds</div><button class="btn btn-ghost btn-sm" data-incr>+1</button></div>
+            <div class="stat-tile" data-key="amendments"><div class="num" data-count>0</div><div class="lbl">Amendments</div><button class="btn btn-ghost btn-sm" data-incr>+1</button></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;"><h2 style="margin-bottom:0;">Log</h2><button class="btn btn-danger btn-sm" id="analytics-reset">Reset</button></div>
+          <div id="analytics-log" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, collection } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyABGygIj8TO1Oe4Xr5I_hiXRdjSI5KwAuE",
+  authDomain: "delegates-best-friend.firebaseapp.com",
+  projectId: "delegates-best-friend",
+  storageBucket: "delegates-best-friend.firebasestorage.app",
+  messagingSenderId: "177596260546",
+  appId: "1:177596260546:web:90f7b3f080f9f8dda69b5b"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
+
+/* ── Firestore storage helpers ── */
+let currentUid = null;
+async function storeGet(key) {
+  if (!currentUid) return null;
+  try { const d = await getDoc(doc(db,'users',currentUid,'kv',key)); return d.exists() ? d.data().value : null; } catch(e){ return null; }
+}
+async function storeSet(key, value) {
+  if (!currentUid) return;
+  try { await setDoc(doc(db,'users',currentUid,'kv',key),{value, updatedAt:Date.now()}); } catch(e){ console.error(e); }
+}
+
+/* ── Claude AI helper ── */
+const PROXY = "https://delegatesbestfriend-proxy.bumontheinternet.workers.dev/api/claude";
+async function askClaude(system, user, json=true) {
+  const r = await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system,messages:[{role:'user',content:user}]})});
+  if(!r.ok) throw new Error('AI error '+r.status);
+  const d = await r.json();
+  const text = (d.content||[]).map(b=>b.text||'').join('').trim();
+  if(!json) return text;
+  let t = text.replace(/^```[a-z]*\s*/i,'').replace(/```\s*$/,'').trim();
+  try{return JSON.parse(t);}catch{
+    const a=t.indexOf('['),b=t.lastIndexOf(']'),c=t.indexOf('{'),e=t.lastIndexOf('}');
+    if(a>=0&&b>a)try{return JSON.parse(t.slice(a,b+1));}catch{}
+    if(c>=0&&e>c)try{return JSON.parse(t.slice(c,e+1));}catch{}
+    throw new Error('Could not parse AI response.');
+  }
+}
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);}
+function toast(msg,kind){const w=document.getElementById('toast-wrap'),el=document.createElement('div');el.className='toast';if(kind==='error')el.style.background='#c56548';el.textContent=msg;w.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),320);},3000);}
+function showError(id,msg){const el=document.getElementById(id);if(!el)return;el.innerHTML=msg?`<div class="error-box">${esc(msg)}</div>`:'';}
+function setBtn(btn,label,busy,bt,it){btn.disabled=busy;if(label)label.textContent=busy?bt:it;}
+
+/* ── Auth ── */
+const authGate=document.getElementById('auth-gate'), appShell=document.getElementById('app');
+let authMode='signin';
+
+onAuthStateChanged(auth, user=>{
+  if(user){
+    currentUid=user.uid;
+    authGate.style.display='none';
+    appShell.classList.remove('app-hidden');
+    document.getElementById('account-name').textContent=user.displayName||'Delegate';
+    document.getElementById('account-email').textContent=user.email||'';
+    const av=document.getElementById('account-avatar'),fb=document.getElementById('account-fallback-avatar');
+    if(user.photoURL){av.src=user.photoURL;av.style.display='';fb.style.display='none';}
+    else{av.style.display='none';fb.style.display='flex';fb.textContent=(user.displayName||user.email||'D').charAt(0).toUpperCase();}
+    initApp();
+  } else {
+    currentUid=null;
+    authGate.style.display='';
+    appShell.classList.add('app-hidden');
+  }
+});
+
+document.getElementById('google-signin-btn').addEventListener('click',async()=>{
+  showError('auth-error','');
+  try{await signInWithPopup(auth,googleProvider);}catch(e){if(e.code!=='auth/popup-closed-by-user')showError('auth-error',fmtErr(e.code));}
+});
+
+document.getElementById('email-auth-form').addEventListener('submit',async e=>{
+  e.preventDefault();
+  showError('auth-error','');
+  const email=document.getElementById('auth-email').value.trim();
+  const pw=document.getElementById('auth-password').value;
+  const btn=document.getElementById('email-auth-submit');
+  btn.disabled=true;
+  try{
+    if(authMode==='signup') await createUserWithEmailAndPassword(auth,email,pw);
+    else await signInWithEmailAndPassword(auth,email,pw);
+  }catch(e){showError('auth-error',fmtErr(e.code));btn.disabled=false;}
+});
+
+document.getElementById('auth-mode-toggle').addEventListener('click',()=>{
+  authMode=authMode==='signin'?'signup':'signin';
+  document.getElementById('email-auth-submit').textContent=authMode==='signup'?'Create account':'Sign in';
+  document.getElementById('auth-mode-text').textContent=authMode==='signup'?'Already have an account?':"Don't have an account?";
+  document.getElementById('auth-mode-toggle').textContent=authMode==='signup'?'Sign in':'Create one';
+  showError('auth-error','');
+});
+
+document.getElementById('auth-forgot-btn').addEventListener('click',async()=>{
+  const email=document.getElementById('auth-email').value.trim();
+  if(!email){showError('auth-error','Enter your email above first.');return;}
+  try{await sendPasswordResetEmail(auth,email);toast('Reset email sent.');}catch(e){showError('auth-error',fmtErr(e.code));}
+});
+
+document.getElementById('account-signout-btn').addEventListener('click',()=>signOut(auth));
+
+function fmtErr(code){
+  return({'auth/invalid-email':'Invalid email address.','auth/user-not-found':'No account with that email.','auth/wrong-password':'Incorrect password.','auth/invalid-credential':'Incorrect email or password.','auth/email-already-in-use':'An account already exists with that email.','auth/weak-password':'Password must be at least 6 characters.','auth/unauthorized-domain':'This domain is not authorised — add it in Firebase Console → Authentication → Settings → Authorised domains.'})[code]||(code||'Something went wrong.');
+}
+
+/* ── Nav ── */
+document.querySelectorAll('.navbtn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const mid=btn.getAttribute('data-module');
+    document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+    const me=document.getElementById('mod-'+mid);
+    if(me){me.classList.add('active');document.getElementById('module-title').textContent=me.getAttribute('data-title')||'';document.getElementById('crumb-text').innerHTML=me.getAttribute('data-crumb')||'';}
+    document.getElementById('sidebar').classList.remove('open');
+    window.scrollTo({top:0,behavior:'auto'});
+  });
+});
+document.getElementById('sidebar-toggle').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
+
+/* ── Theme ── */
+function applyTheme(t){document.body.setAttribute('data-theme',t);['dark','light','photo'].forEach(m=>{const b=document.getElementById('theme-'+m+'-btn');if(b)b.classList.toggle('active',m===t);});storeSet('theme',t);}
+document.getElementById('theme-dark-btn').addEventListener('click',()=>applyTheme('dark'));
+document.getElementById('theme-light-btn').addEventListener('click',()=>applyTheme('light'));
+document.getElementById('theme-photo-btn').addEventListener('click',()=>document.getElementById('photo-theme-input').click());
+
+/* ── Data ── */
+const PRE=['Affirming','Alarmed by','Bearing in mind','Believing','Cognizant of','Conscious of','Convinced','Deeply concerned','Deeply disturbed','Desiring','Emphasizing','Expressing its appreciation','Fully aware','Further recalling','Guided by','Having considered','Keeping in mind','Noting with regret','Noting with satisfaction','Observing','Reaffirming','Recalling','Recognizing','Taking into account','Taking note','Welcoming'];
+const OPE=['Accepts','Affirms','Authorizes','Calls upon','Calls for','Condemns','Decides','Demands','Deplores','Encourages','Endorses','Further recommends','Further requests','Further resolves','Instructs','Invites','Notes','Recommends','Regrets','Requests','Resolves','Strongly condemns','Strongly urges','Supports','Urges'];
+const ROP=[
+  {n:'Point of Order',u:'Flag a procedural mistake.',v:'Chair rules'},
+  {n:'Point of Personal Privilege',u:'Personal comfort issue.',v:'Chair rules'},
+  {n:'Point of Parliamentary Inquiry',u:'Ask chair a procedural question.',v:'Chair rules'},
+  {n:'Point of Information',u:'Ask the speaker a question.',v:'Speaker/chair grants'},
+  {n:'Moderated Caucus',u:'Structured speaking on a sub-topic.',v:'Simple majority'},
+  {n:'Unmoderated Caucus',u:'Free-form negotiation + drafting time.',v:'Simple majority'},
+  {n:'Introduce Draft Resolution',u:'Put a completed draft on the floor.',v:'Simple majority'},
+  {n:'Introduce Amendment',u:'Propose a change to a draft.',v:'Simple majority'},
+  {n:'Roll Call Vote',u:'Vote country-by-country.',v:'Simple majority to invoke'},
+  {n:'Close Debate',u:'End discussion, move to voting.',v:'Two-thirds majority'},
+  {n:'Table the Resolution',u:'Postpone and shelve a resolution.',v:'Two-thirds majority'},
+  {n:'Right of Reply',u:'Respond to an insult to your delegation.',v:'Chair grants'},
+];
+
+/* ── Main app init (runs after sign-in) ── */
+function initApp() {
+
+  // Theme
+  storeGet('theme').then(t=>{ if(t) applyTheme(t); });
+
+  // Mode toggle helper
+  function wireModes(toggleId, scopeEl, cb) {
+    const tog = document.getElementById(toggleId);
+    if(!tog) return;
+    tog.querySelectorAll('button[data-mode]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        tog.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        const m=btn.getAttribute('data-mode');
+        scopeEl.querySelectorAll('[data-mode-panel]').forEach(p=>p.style.display=p.getAttribute('data-mode-panel')===m?'':'none');
+        if(cb) cb(m);
+      });
+    });
+  }
+
+  // Live speech helper
+  function createLive(opts){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){if(opts.unsupEl)opts.unsupEl.style.display='';if(opts.btn)opts.btn.disabled=true;return{getTranscript:()=>'',stop:()=>{}};}
+    let sr=null,live=false,full='',interim='',lastLen=0,busy=false,iv=null,ms=true;
+    function render(){if(opts.transEl){opts.transEl.innerHTML=esc(full)+(interim?` <span style="opacity:.5">${esc(interim)}</span>`:'');opts.transEl.scrollTop=opts.transEl.scrollHeight;}}
+    function build(){
+      const r=new SR();r.continuous=true;r.interimResults=true;r.lang='en-US';
+      r.onresult=ev=>{let ic='';for(let i=ev.resultIndex;i<ev.results.length;i++){if(ev.results[i].isFinal){const p=ev.results[i][0].transcript.trim();if(p)full+=(full&&!/\s$/.test(full)?' ':'')+p;}else ic+=ev.results[i][0].transcript;}interim=ic;render();};
+      r.onerror=ev=>{if(ev.error==='not-allowed'){toast('Mic blocked.','error');stop();}};
+      r.onend=()=>{if(live&&!ms)try{sr.start();}catch(e){}};
+      return r;
+    }
+    async function analyze(force){
+      if(!opts.onChunk||busy)return;
+      const nc=full.slice(lastLen).trim();
+      if(!force&&nc.length<(opts.threshold||70))return;
+      if(!nc)return;
+      busy=true;lastLen=full.length;
+      try{await opts.onChunk(nc,full);}catch(e){toast(e.message,'error');}
+      busy=false;
+    }
+    function setUI(on){
+      if(opts.btn){opts.btn.classList.toggle('btn-danger',on);opts.btn.classList.toggle('btn-primary',!on);}
+      if(opts.lblEl)opts.lblEl.textContent=on?(opts.onLabel||'Stop'):(opts.offLabel||'Start');
+      if(opts.statEl)opts.statEl.textContent=on?(opts.onStatus||'Listening…'):(opts.offStatus||'Mic is off.');
+    }
+    function start(){ms=false;sr=build();try{sr.start();}catch(e){}live=true;setUI(true);if(opts.onChunk)iv=setInterval(()=>analyze(false),opts.interval||9000);}
+    function stop(){ms=true;live=false;if(sr)try{sr.stop();}catch(e){}if(iv){clearInterval(iv);iv=null;}setUI(false);if(opts.onChunk)analyze(true);}
+    if(opts.btn)opts.btn.addEventListener('click',()=>live?stop():start());
+    return{getTranscript:()=>full,stop};
+  }
+
+  /* ── FLOOR BRIEF ── */
+  const subtabs=document.querySelectorAll('#fb-subtab button');
+  subtabs.forEach(btn=>btn.addEventListener('click',()=>{
+    subtabs.forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+    const s=btn.getAttribute('data-sub');
+    document.getElementById('fb-poi-section').style.display=s==='poi'?'':'none';
+    document.getElementById('fb-res-section').style.display=s==='res'?'':'none';
+  }));
+
+  let fbPoiMode='paste';
+  wireModes('fb-poi-mode',document.getElementById('fb-poi-section'),m=>{
+    fbPoiMode=m;
+    document.getElementById('fb-poi-generate').style.display=m==='live'?'none':'';
+  });
+
+  const POI_SYS="You are a sharp MUN coach. Given a speech, generate 2-5 Points of Information. Types: 'clarifying','challenging','procedural'. Each: type, excerpt (under 12 words), question (phrased as 'Would the delegate...'). Respond ONLY with a raw JSON array.";
+  const RES_SYS="You are a sharp MUN coach reviewing a resolution. Find: 'vague','contradiction','procedural','factual' issues. Each: type, severity ('high','medium','low'), clause (under 15 words), note (1-2 sentences). Respond ONLY with a raw JSON array.";
+
+  function poiCard(it){const t=(it.type||'').toLowerCase();const tc=t==='challenging'?'type-challenging':t==='procedural'?'type-procedural':'type-clarifying';return `<div class="poi-card"><div class="row-top"><span class="tag ${tc}">${esc(t||'Note')}</span></div>${it.excerpt?`<blockquote>"${esc(it.excerpt)}"</blockquote>`:''}<div>${esc(it.question||'')}</div></div>`;}
+  function issueCard(it){const t=(it.type||'').toLowerCase();const sv=(it.severity||'medium').toLowerCase();const tcm={vague:'type-clarifying',contradiction:'type-challenging',procedural:'type-procedural',factual:'type-factual'};const sc=sv==='high'?'sev-high':sv==='low'?'sev-low':'sev-med';return `<div class="issue-card"><div class="row-top"><span class="margin-flag"><span class="dot"></span></span><span class="tag ${sc}">${esc(sv)}</span><span class="tag ${tcm[t]||'type-procedural'}">${esc(t)}</span></div>${it.clause?`<blockquote>"${esc(it.clause)}"</blockquote>`:''}<div>${esc(it.note||'')}</div></div>`;}
+
+  function renderFeed(panelId,feedId,items,cardFn,append){
+    const p=document.getElementById(panelId),f=document.getElementById(feedId);
+    p.style.display='';
+    if(!Array.isArray(items)||items.length===0){if(!append)f.innerHTML='<div class="empty-state"><div class="hint">Nothing flagged.</div></div>';return;}
+    const h=items.map(cardFn).join('');
+    if(append)f.insertAdjacentHTML('afterbegin',h);else f.innerHTML=h;
+  }
+
+  document.getElementById('fb-poi-generate').addEventListener('click',async()=>{
+    const btn=document.getElementById('fb-poi-generate'),lbl=document.getElementById('fb-poi-generate-label');
+    showError('fb-poi-error','');
+    const txt=document.getElementById('fb-poi-text').value.trim();
+    if(!txt){showError('fb-poi-error','Paste a speech first.');return;}
+    setBtn(btn,lbl,true,'Generating…','Generate POIs');
+    try{
+      let u=document.getElementById('fb-poi-country').value.trim();let t=document.getElementById('fb-poi-topic').value.trim();
+      const items=await askClaude(POI_SYS,(u?`Country: ${u}\n`:'')+(t?`Topic: ${t}\n`:'')+`Speech:\n${txt}`);
+      renderFeed('fb-poi-results-panel','fb-poi-feed',items,poiCard);
+    }catch(e){showError('fb-poi-error',e.message);}
+    setBtn(btn,lbl,false,'','Generate POIs');
+  });
+
+  createLive({btn:document.getElementById('fb-poi-live-toggle'),lblEl:document.getElementById('fb-poi-live-toggle-label'),statEl:document.getElementById('fb-poi-live-status'),transEl:document.getElementById('fb-poi-live-transcript'),unsupEl:document.getElementById('fb-poi-live-unsupported'),offLabel:'Start listening',onLabel:'Stop listening',offStatus:'Microphone is off.',onStatus:'Listening…',threshold:70,interval:10000,
+    onChunk:async nc=>{const items=await askClaude(POI_SYS,(document.getElementById('fb-poi-country').value.trim()?`Country: ${document.getElementById('fb-poi-country').value.trim()}\n`:'')+`New chunk:\n${nc}`);renderFeed('fb-poi-results-panel','fb-poi-feed',items,poiCard,true);}
+  });
+
+  document.getElementById('fb-res-generate').addEventListener('click',async()=>{
+    const btn=document.getElementById('fb-res-generate'),lbl=document.getElementById('fb-res-generate-label');
+    showError('fb-res-error','');
+    const txt=document.getElementById('fb-res-text').value.trim();
+    if(!txt){showError('fb-res-error','Paste resolution text first.');return;}
+    setBtn(btn,lbl,true,'Reviewing…','Review resolution');
+    try{const items=await askClaude(RES_SYS,`Resolution:\n${txt}`);renderFeed('fb-res-results-panel','fb-res-feed',items,issueCard);}
+    catch(e){showError('fb-res-error',e.message);}
+    setBtn(btn,lbl,false,'','Review resolution');
+  });
+
+  /* ── CAUCUS ── */
+  const CIRC=2*Math.PI*86;
+  const progEl=document.getElementById('caucus-ring-prog');
+  progEl.setAttribute('stroke-dasharray',String(CIRC));
+  let rem=60,tot=60,iv2=null;
+  const durEl=document.getElementById('caucus-duration'),warnEl=document.getElementById('caucus-warn');
+  function fmtT(s){s=Math.max(0,Math.round(s));return`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
+  function upRing(){const f=tot>0?Math.max(0,rem/tot):0;progEl.style.strokeDashoffset=String(CIRC*(1-f));document.getElementById('caucus-time').textContent=fmtT(rem);document.getElementById('caucus-ring').classList.toggle('warn',rem<=(parseInt(warnEl.value)||0)&&rem>0);}
+  function tick(){rem--;if(rem<=0){rem=0;upRing();document.getElementById('caucus-time-sub').textContent="time's up";clearInterval(iv2);iv2=null;try{const ac=new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=720;g.gain.setValueAtTime(.0001,ac.currentTime);g.gain.exponentialRampToValueAtTime(.18,ac.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.5);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.5);}catch(e){}return;}upRing();}
+  document.getElementById('caucus-start').addEventListener('click',()=>{if(iv2)return;if(rem<=0){tot=parseInt(durEl.value)||60;rem=tot;}document.getElementById('caucus-time-sub').textContent='running';iv2=setInterval(tick,1000);});
+  document.getElementById('caucus-pause').addEventListener('click',()=>{if(iv2){clearInterval(iv2);iv2=null;document.getElementById('caucus-time-sub').textContent='paused';}});
+  document.getElementById('caucus-reset').addEventListener('click',()=>{if(iv2){clearInterval(iv2);iv2=null;}tot=parseInt(durEl.value)||60;rem=tot;document.getElementById('caucus-time-sub').textContent='ready';upRing();});
+  durEl.addEventListener('change',()=>{if(!iv2){tot=parseInt(durEl.value)||60;rem=tot;upRing();}upFit();});
+  function upFit(){const d=Math.max(1,parseInt(durEl.value)||60),t=Math.max(0,parseInt(document.getElementById('caucus-total').value)||0);document.getElementById('caucus-fit-count').textContent=String(Math.floor(t/d));}
+  document.getElementById('caucus-total').addEventListener('input',upFit);
+  upRing();upFit();
+
+  let queue=[],qId=1;
+  const qList=document.getElementById('caucus-queue-list');
+  function rQ(){if(!queue.length){qList.innerHTML='<div class="empty-state"><div class="hint">Queue empty.</div></div>';return;}qList.innerHTML=queue.map((it,i)=>`<div class="queue-item${i===0?' current':''}"><span class="idx">${i+1}</span><span class="name">${esc(it.name)}</span><button class="icon-btn" data-rm="${it.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`).join('');}
+  qList.addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;queue=queue.filter(q=>q.id!==parseInt(b.getAttribute('data-rm')));rQ();});
+  document.getElementById('caucus-queue-add').addEventListener('click',()=>{const n=document.getElementById('caucus-queue-name').value.trim();if(!n)return;queue.push({id:qId++,name:n});document.getElementById('caucus-queue-name').value='';rQ();});
+  document.getElementById('caucus-queue-name').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('caucus-queue-add').click();});
+  document.getElementById('caucus-queue-next').addEventListener('click',()=>{if(!queue.length){toast('Queue is empty.');return;}const nx=queue.shift();document.getElementById('caucus-now-speaking').textContent=nx.name;if(iv2){clearInterval(iv2);iv2=null;}tot=parseInt(durEl.value)||60;rem=tot;document.getElementById('caucus-time-sub').textContent='ready';upRing();rQ();});
+  document.getElementById('caucus-queue-clear').addEventListener('click',()=>{queue=[];rQ();});
+  rQ();
+
+  /* ── DRAFT ── */
+  let clauseType='preambulatory';
+  const cList=document.getElementById('draft-clause-list'),cSearch=document.getElementById('draft-clause-search');
+  function rCL(){const all=clauseType==='preambulatory'?PRE:OPE;const q=cSearch.value.trim().toLowerCase();const fil=q?all.filter(p=>p.toLowerCase().includes(q)):all;cList.innerHTML=fil.length?fil.map(p=>`<div class="clause-item"><span>${esc(p)},</span><button class="copy-btn" data-ph="${esc(p)}">Copy</button></div>`).join(''):'<div class="empty-state"><div class="hint">No matches.</div></div>';}
+  document.getElementById('draft-clause-mode').querySelectorAll('button[data-mode]').forEach(btn=>btn.addEventListener('click',()=>{document.getElementById('draft-clause-mode').querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');clauseType=btn.getAttribute('data-mode');rCL();}));
+  cSearch.addEventListener('input',rCL);
+  cList.addEventListener('click',async e=>{const b=e.target.closest('[data-ph]');if(!b)return;try{await navigator.clipboard.writeText(b.getAttribute('data-ph')+', ');toast('Copied.');}catch{toast('Clipboard unavailable.','error');}});
+  rCL();
+
+  const IMP_SYS="You are a precise MUN drafting coach. Rewrite the clause as a tightened enforceable clause in proper UN style (comma for preambulatory, semicolon for operative). Briefly explain what changed. Respond ONLY with raw JSON: {\"improved\":\"...\",\"explanation\":\"...\"}";
+  document.getElementById('draft-improve-btn').addEventListener('click',async()=>{
+    const btn=document.getElementById('draft-improve-btn'),lbl=document.getElementById('draft-improve-label');
+    showError('draft-improve-error','');document.getElementById('draft-improve-result').innerHTML='';
+    const cl=document.getElementById('draft-improve-input').value.trim();if(!cl){showError('draft-improve-error','Paste a clause first.');return;}
+    setBtn(btn,lbl,true,'Improving…','Improve clause');
+    try{const r=await askClaude(IMP_SYS,`Clause:\n${cl}`);document.getElementById('draft-improve-result').innerHTML=`<div class="issue-card" style="margin-top:12px;"><blockquote>${esc(r.improved||'')}</blockquote><div style="color:var(--slate);font-size:12.5px;">${esc(r.explanation||'')}</div></div>`;}
+    catch(e){showError('draft-improve-error',e.message);}
+    setBtn(btn,lbl,false,'','Improve clause');
+  });
+
+  const MRG_SYS="You are a MUN drafting coach consolidating two clauses. Preserve substantive intent of both. Respond ONLY with raw JSON: {\"merged\":\"...\",\"notes\":\"...\"}";
+  document.getElementById('draft-merge-btn').addEventListener('click',async()=>{
+    const btn=document.getElementById('draft-merge-btn'),lbl=document.getElementById('draft-merge-label');
+    showError('draft-merge-error','');document.getElementById('draft-merge-result').innerHTML='';
+    const a=document.getElementById('draft-merge-a').value.trim(),b=document.getElementById('draft-merge-b').value.trim();
+    if(!a||!b){showError('draft-merge-error','Paste both clauses first.');return;}
+    setBtn(btn,lbl,true,'Merging…','Merge clauses');
+    try{const r=await askClaude(MRG_SYS,`Clause A:\n${a}\n\nClause B:\n${b}`);document.getElementById('draft-merge-result').innerHTML=`<div class="issue-card" style="margin-top:12px;"><blockquote>${esc(r.merged||'')}</blockquote><div style="color:var(--slate);font-size:12.5px;">${esc(r.notes||'')}</div></div>`;}
+    catch(e){showError('draft-merge-error',e.message);}
+    setBtn(btn,lbl,false,'','Merge clauses');
+  });
+
+  /* ── RESEARCH ── */
+  const CP_SYS="You are a MUN research assistant. Given a country, produce a concise prep profile. Respond ONLY with raw JSON: {\"capital\":\"...\",\"government\":\"...\",\"bloc\":\"...\",\"stances\":[\"...\",\"...\"]}";
+  document.getElementById('research-country-btn').addEventListener('click',async()=>{
+    const btn=document.getElementById('research-country-btn'),res=document.getElementById('research-country-result');
+    showError('research-country-error','');res.innerHTML='';
+    const c=document.getElementById('research-country-input').value.trim();if(!c){showError('research-country-error','Type a country name.');return;}
+    btn.disabled=true;btn.textContent='Looking up…';
+    try{const p=await askClaude(CP_SYS,`Country: ${c}`);res.innerHTML=`<div class="issue-card" style="margin-top:12px;"><h3 style="margin-bottom:6px;font-size:15px;">${esc(c)}</h3><table class="ref-table"><tbody><tr><td style="font-weight:600;">Capital</td><td>${esc(p.capital||'—')}</td></tr><tr><td style="font-weight:600;">Government</td><td>${esc(p.government||'—')}</td></tr><tr><td style="font-weight:600;">Bloc</td><td>${esc(p.bloc||'—')}</td></tr></tbody></table><ul style="margin:9px 0 0;padding-left:18px;font-size:13px;">${(p.stances||[]).map(s=>`<li>${esc(s)}</li>`).join('')}</ul><div class="desc" style="margin:8px 0 0;">AI-drafted — verify before citing on the floor.</div></div>`;}
+    catch(e){showError('research-country-error',e.message);}
+    btn.disabled=false;btn.textContent='Profile';
+  });
+
+  const ST_SYS="You are a MUN research assistant. Suggest 3-5 stat-shaped talking points to verify (not invented numbers). Each: angle, source_hint. Respond ONLY with raw JSON: [{\"angle\":\"...\",\"source_hint\":\"...\"}]";
+  document.getElementById('research-stats-btn').addEventListener('click',async()=>{
+    const btn=document.getElementById('research-stats-btn'),res=document.getElementById('research-stats-result');
+    showError('research-stats-error','');res.innerHTML='';
+    const t=document.getElementById('research-stats-input').value.trim();if(!t){showError('research-stats-error','Type a topic.');return;}
+    btn.disabled=true;btn.textContent='Searching…';
+    try{const items=await askClaude(ST_SYS,`Topic: ${t}`);res.innerHTML=(items||[]).map(it=>`<div class="issue-card" style="margin-top:9px;"><div>${esc(it.angle||'')}</div><div class="desc" style="margin:5px 0 0;">Verify: ${esc(it.source_hint||'')}</div></div>`).join('')||'<div class="empty-state"><div class="hint">No angles — try a more specific topic.</div></div>';}
+    catch(e){showError('research-stats-error',e.message);}
+    btn.disabled=false;btn.textContent='Find angles';
+  });
+
+  const ropTb=document.querySelector('#research-rop-table tbody'),ropSr=document.getElementById('research-rop-search');
+  function rRop(){const q=ropSr.value.trim().toLowerCase();ropTb.innerHTML=ROP.filter(r=>!q||r.n.toLowerCase().includes(q)||r.u.toLowerCase().includes(q)).map(r=>`<tr><td style="font-weight:600;">${esc(r.n)}</td><td>${esc(r.u)}</td><td>${esc(r.v)}</td></tr>`).join('')||'<tr><td colspan="3" class="empty-state">No matches.</td></tr>';}
+  ropSr.addEventListener('input',rRop);rRop();
+
+  /* ── STRATEGY ── */
+  let dels=[],bId=1;
+  function rBlocs(){['pro','neutral','anti'].forEach(bl=>{const le=document.querySelector(`.bloc-list[data-list="${bl}"]`),its=dels.filter(d=>d.bloc===bl);le.innerHTML=its.length?its.map(d=>`<div class="bloc-chip"><span>${esc(d.name)}</span><span style="display:flex;gap:4px;align-items:center;"><select data-mv="${d.id}"><option value="pro"${bl==='pro'?' selected':''}>Pro</option><option value="neutral"${bl==='neutral'?' selected':''}>Neutral</option><option value="anti"${bl==='anti'?' selected':''}>Anti</option></select><button class="icon-btn" data-rb="${d.id}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>`).join(''):'<div class="desc" style="font-size:11px;">Empty</div>';});
+  const tot=dels.length,cnt={pro:0,neutral:0,anti:0};dels.forEach(d=>{cnt[d.bloc]=(cnt[d.bloc]||0)+1;});
+  const pct=n=>tot?n/tot*100:0;
+  ['pro','neutral','anti'].forEach(b=>document.getElementById('strategy-bar-'+b).style.width=pct(cnt[b])+'%');
+  document.getElementById('strategy-bar-legend').textContent=tot?`Pro ${cnt.pro} · Neutral ${cnt.neutral} · Anti ${cnt.anti} (${tot} total)`:'Add delegations to see vote share.';}
+  document.getElementById('strategy-bloc-add').addEventListener('click',()=>{const inp=document.getElementById('strategy-bloc-name'),n=inp.value.trim();if(!n)return;dels.push({id:bId++,name:n,bloc:'neutral'});inp.value='';rBlocs();});
+  document.getElementById('strategy-bloc-name').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('strategy-bloc-add').click();});
+  document.querySelectorAll('.bloc-list').forEach(le=>{
+    le.addEventListener('change',e=>{const s=e.target.closest('[data-mv]');if(!s)return;const d=dels.find(x=>x.id===parseInt(s.getAttribute('data-mv')));if(d){d.bloc=s.value;rBlocs();}});
+    le.addEventListener('click',e=>{const b=e.target.closest('[data-rb]');if(!b)return;dels=dels.filter(d=>d.id!==parseInt(b.getAttribute('data-rb')));rBlocs();});
+  });
+  rBlocs();
+
+  const ADV_SYS="You are a sharp MUN strategy coach. Given a bloc situation, give 2-4 concrete tactical bullet points on what to do next. Respond ONLY with raw JSON: {\"read\":\"one sentence summary\",\"moves\":[\"...\",\"...\"]}";
+  document.getElementById('strategy-advisor-btn').addEventListener('click',async()=>{
+    const btn=document.getElementById('strategy-advisor-btn'),lbl=document.getElementById('strategy-advisor-label');
+    showError('strategy-advisor-error','');document.getElementById('strategy-advisor-result').innerHTML='';
+    const t=document.getElementById('strategy-advisor-input').value.trim();if(!t){showError('strategy-advisor-error','Describe your situation first.');return;}
+    setBtn(btn,lbl,true,'Thinking…','Get tactical read');
+    try{const r=await askClaude(ADV_SYS,t);document.getElementById('strategy-advisor-result').innerHTML=`<div class="issue-card" style="margin-top:12px;"><div style="font-weight:600;margin-bottom:8px;">${esc(r.read||'')}</div><ul style="margin:0;padding-left:18px;font-size:13px;">${(r.moves||[]).map(m=>`<li style="margin-bottom:4px;">${esc(m)}</li>`).join('')}</ul></div>`;}
+    catch(e){showError('strategy-advisor-error',e.message);}
+    setBtn(btn,lbl,false,'','Get tactical read');
+  });
+
+  const mtTb=document.querySelector('#strategy-motion-table tbody'),mtSr=document.getElementById('strategy-motion-search');
+  function rMt(){const q=mtSr.value.trim().toLowerCase();mtTb.innerHTML=ROP.filter(r=>!q||r.n.toLowerCase().includes(q)||r.u.toLowerCase().includes(q)).map(r=>`<tr><td style="font-weight:600;">${esc(r.n)}</td><td>${esc(r.u)}</td><td>${r.v.includes('majority')?r.v:'—'}</td></tr>`).join('')||'<tr><td colspan="3">No matches.</td></tr>';}
+  mtSr.addEventListener('input',rMt);rMt();
+
+  /* ── SPEECH COACH ── */
+  let coachMode='paste';
+  wireModes('coach-mode',document.querySelector('#mod-speechcoach .panel'),m=>coachMode=m);
+  const coachLive=createLive({btn:document.getElementById('coach-live-toggle'),lblEl:document.getElementById('coach-live-toggle-label'),statEl:document.getElementById('coach-live-status'),transEl:document.getElementById('coach-live-transcript'),unsupEl:document.getElementById('coach-live-unsupported'),offLabel:'Start recording',onLabel:'Stop recording',offStatus:'Mic is off.',onStatus:'Recording…'});
+  const wcEl=document.getElementById('coach-wordcount');
+  function upWC(){const txt=(coachMode==='live'?coachLive.getTranscript():document.getElementById('coach-text').value).trim();const w=txt?txt.split(/\s+/).filter(Boolean):[];const s=Math.round(w.length/150*60);wcEl.textContent=`${w.length} word${w.length===1?'':'s'} · roughly ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')} at 150 wpm.`;}
+  document.getElementById('coach-text').addEventListener('input',upWC);setInterval(upWC,2000);upWC();
+
+  const SCR_SYS="You are a warm but rigorous MUN speech coach. Give feedback on pacing, structure, filler words, and tone. Respond ONLY with raw JSON: {\"verdict\":\"one honest sentence\",\"strengths\":[\"...\"],\"improve\":[\"...\"]}";
+  document.getElementById('coach-score-btn').addEventListener('click',async()=>{
+    const btn=document.getElementById('coach-score-btn'),lbl=document.getElementById('coach-score-label');
+    showError('coach-score-error','');document.getElementById('coach-score-result').innerHTML='';
+    const t=(coachMode==='live'?coachLive.getTranscript():document.getElementById('coach-text').value).trim();if(!t){showError('coach-score-error','Add a speech first.');return;}
+    setBtn(btn,lbl,true,'Scoring…','Score this speech');
+    try{const r=await askClaude(SCR_SYS,`Speech:\n${t}`);document.getElementById('coach-score-result').innerHTML=`<div class="issue-card" style="margin-top:12px;"><div style="font-weight:600;margin-bottom:8px;">${esc(r.verdict||'')}</div><div class="grid-2"><div><div class="field-label">Working well</div><ul style="margin:4px 0 0;padding-left:18px;font-size:13px;">${(r.strengths||[]).map(s=>`<li style="margin-bottom:3px;">${esc(s)}</li>`).join('')}</ul></div><div><div class="field-label">Worth fixing</div><ul style="margin:4px 0 0;padding-left:18px;font-size:13px;">${(r.improve||[]).map(s=>`<li style="margin-bottom:3px;">${esc(s)}</li>`).join('')}</ul></div></div></div>`;}
+    catch(e){showError('coach-score-error',e.message);}
+    setBtn(btn,lbl,false,'','Score this speech');
+  });
+
+  document.getElementById('coach-translate-btn').addEventListener('click',async()=>{
+    const btn=document.getElementById('coach-translate-btn'),lbl=document.getElementById('coach-translate-label');
+    showError('coach-translate-error','');document.getElementById('coach-translate-result').innerHTML='';
+    const t=document.getElementById('coach-translate-input').value.trim(),lg=document.getElementById('coach-translate-lang').value.trim()||'French';if(!t){showError('coach-translate-error','Add text first.');return;}
+    setBtn(btn,lbl,true,'Translating…','Translate');
+    try{const tr=await askClaude(`Translate the given text into ${lg}. Respond with ONLY the translation.`,t,false);document.getElementById('coach-translate-result').innerHTML=`<div class="issue-card" style="margin-top:12px;">${esc(tr)}</div>`;}
+    catch(e){showError('coach-translate-error',e.message);}
+    setBtn(btn,lbl,false,'','Translate');
+  });
+
+  /* ── NETWORK ── */
+  let contacts=[];
+  async function loadContacts(){const r=await storeGet('network');if(r){try{contacts=JSON.parse(r);}catch(e){contacts=[];}}rNet();}
+  async function saveContacts(){await storeSet('network',JSON.stringify(contacts));}
+  const relL={ally:'Ally',opposition:'Opposition',fence:'Fence-sitter',cosponsor:'Co-sponsor'};
+  const relC={ally:'rel-ally',opposition:'rel-opposition',fence:'rel-fence',cosponsor:'rel-cosponsor'};
+  function rNet(){const q=document.getElementById('net-search').value.trim().toLowerCase(),f=document.getElementById('net-filter').value,le=document.getElementById('net-list');let its=contacts.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));if(f)its=its.filter(c=>c.relationship===f);if(q)its=its.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.delegation||'').toLowerCase().includes(q));if(!its.length){le.innerHTML='<div class="empty-state"><div class="hint">No contacts yet.</div></div>';return;}le.innerHTML=its.map(c=>`<div class="net-card"><div class="row-top"><div><strong>${esc(c.name)}</strong>${c.delegation?` <span style="color:var(--slate);font-size:12.5px;">— ${esc(c.delegation)}</span>`:''}</div><span class="tag ${relC[c.relationship]||'rel-fence'}">${esc(relL[c.relationship]||'—')}</span></div>${c.conference?`<div class="desc" style="margin:4px 0;">${esc(c.conference)}</div>`:''}${c.notes?`<div style="font-size:13px;margin-top:6px;">${esc(c.notes)}</div>`:''}<div style="margin-top:8px;"><button class="btn btn-danger btn-sm" data-del="${c.id}">Remove</button></div></div>`).join('');}
+  document.getElementById('net-add-btn').addEventListener('click',async()=>{showError('net-add-error','');const n=document.getElementById('net-name').value.trim();if(!n){showError('net-add-error','Give them a name first.');return;}contacts.push({id:'c'+Date.now(),name:n,delegation:document.getElementById('net-delegation').value.trim(),relationship:document.getElementById('net-relationship').value,conference:document.getElementById('net-conference').value.trim(),notes:document.getElementById('net-notes').value.trim(),createdAt:Date.now()});await saveContacts();rNet();['net-name','net-delegation','net-conference','net-notes'].forEach(id=>document.getElementById(id).value='');toast('Saved '+n+'.');});
+  document.getElementById('net-list').addEventListener('click',async e=>{const b=e.target.closest('[data-del]');if(!b)return;contacts=contacts.filter(c=>c.id!==b.getAttribute('data-del'));await saveContacts();rNet();});
+  document.getElementById('net-search').addEventListener('input',rNet);
+  document.getElementById('net-filter').addEventListener('change',rNet);
+  loadContacts();
+
+  /* ── ANALYTICS ── */
+  const ALBL={speeches:'Speeches given',pois:'POIs raised',motions:'Motions made',blocadds:'Bloc additions',amendments:'Amendments'};
+  let counts={speeches:0,pois:0,motions:0,blocadds:0,amendments:0},aLog=[];
+  async function loadA(){const r=await storeGet('analytics');if(r){try{const p=JSON.parse(r);counts=Object.assign(counts,p.counts||{});aLog=p.log||[];}catch(e){}}rCnts();rALog();}
+  async function saveA(){await storeSet('analytics',JSON.stringify({counts,log:aLog}));}
+  function rCnts(){document.querySelectorAll('.stat-tile[data-key]').forEach(tile=>tile.querySelector('[data-count]').textContent=counts[tile.getAttribute('data-key')]||0);}
+  function rALog(){const le=document.getElementById('analytics-log');if(!aLog.length){le.innerHTML='<div class="empty-state"><div class="hint">No activity logged yet.</div></div>';return;}le.innerHTML=aLog.slice().sort((a,b)=>b.t-a.t).slice(0,60).map(r=>{const d=new Date(r.t),t=(d.getHours()%12||12)+':'+String(d.getMinutes()).padStart(2,'0')+(d.getHours()>=12?'pm':'am');return`<div class="log-row"><span>${esc(ALBL[r.key]||r.key)}</span><span>${t}</span></div>`;}).join('');}
+  document.querySelectorAll('.stat-tile[data-key] [data-incr]').forEach(btn=>{btn.addEventListener('click',async()=>{const k=btn.closest('.stat-tile').getAttribute('data-key');counts[k]=(counts[k]||0)+1;aLog.push({key:k,t:Date.now()});rCnts();rALog();await saveA();});});
+  document.getElementById('analytics-reset').addEventListener('click',async()=>{counts={speeches:0,pois:0,motions:0,blocadds:0,amendments:0};aLog=[];rCnts();rALog();await saveA();toast('Session reset.');});
+  loadA();
+
+} // end initApp
+</script>
+</body>
+</html>
